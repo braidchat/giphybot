@@ -7,6 +7,7 @@ extern crate rmp;
 extern crate rmp_serde;
 extern crate serde;
 extern crate uuid;
+extern crate byteorder;
 
 use std::io::Read;
 
