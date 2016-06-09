@@ -1,7 +1,11 @@
+#![feature(custom_derive, plugin)]
+#![plugin(serde_macros)]
+
 #[macro_use]
 extern crate iron;
-extern crate rmp_serialize as msgpack;
-extern crate rustc_serialize;
+extern crate rmp;
+extern crate rmp_serde;
+extern crate serde;
 extern crate uuid;
 
 use std::io::Read;
@@ -12,7 +16,6 @@ use iron::{method,status};
 mod routing;
 mod message;
 
-// Main
 fn main() {
     Iron::new(|request : &mut Request| {
         let req_path = request.url.path.join("/");
