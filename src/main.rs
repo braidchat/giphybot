@@ -45,9 +45,7 @@ fn main() {
                     let mac = request.headers.get_raw("X-Braid-Signature");
                     // TODO: verify mac
                     println!("Request mac = {:?}", mac);
-                    {
-                        decode_msgpack_body(&mut request.body);
-                    }
+                    decode_msgpack_body(&mut request.body);
                     Ok(Response::with((status::Ok, "ok")))
                 } else {
                     Err(IronError::new(NoRoute, status::NotFound))
