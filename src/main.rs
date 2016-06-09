@@ -2,24 +2,15 @@
 extern crate iron;
 extern crate rmp_serialize as msgpack;
 extern crate rustc_serialize;
+extern crate uuid;
 
 use std::io::Read;
 
 use iron::{Iron,Request,Response,IronError};
-use iron::{method,status,request};
-use msgpack::{Decoder};
-use rustc_serialize::{Decodable};
+use iron::{method,status};
 
 mod routing;
-
-// Decoding transit+msgpack body
-fn decode_msgpack_body<'a, 'b>(req_body: &mut request::Body<'a, 'b>) {
-    let mut buf = Vec::new();
-    req_body.read_to_end(&mut buf).unwrap();
-    let mut decoder = Decoder::new(&buf[..]);
-    let res: (u8, String) = Decodable::decode(&mut decoder).unwrap();
-    println!("result = {:?}", res);
-}
+mod message;
 
 // Main
 fn main() {
@@ -31,7 +22,9 @@ fn main() {
                     let mac = request.headers.get_raw("X-Braid-Signature");
                     // TODO: verify mac
                     println!("Request mac = {:?}", mac);
-                    decode_msgpack_body(&mut request.body);
+                    let mut buf = Vec::new();
+                    request.body.read_to_end(&mut buf).unwrap();
+                    message::decode_msgpack_body(buf);
                     Ok(Response::with((status::Ok, "ok")))
                 } else {
                     Err(IronError::new(routing::NoRoute, status::NotFound))
