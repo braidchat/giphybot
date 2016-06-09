@@ -1,4 +1,4 @@
-//use uuid::Uuid;
+use uuid::Uuid;
 use msgpack::{Decoder};
 use std::collections::BTreeMap;
 use rustc_serialize::{Decodable};
