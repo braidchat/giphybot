@@ -4,3 +4,6 @@ version = "0.1.0"
 authors = ["James N. V. Cash <james.nvc@gmail.com>"]
 
 [dependencies]
+iron = "^0.3"
+rustc-serialize = "0.3.19"
+rmp-serialize = "^0.7"
