@@ -58,6 +58,7 @@ pub fn request_gif(query: String) -> Option<String> {
     let json_body = send_giphy_request(query).expect("Couldn't get API info");
     match serde_json::from_str(&json_body[..]) {
         Ok(parsed) => {
+            // TODO: don't just use unwrap() everywhere, handle errors
             let parsed_json: BTreeMap<String, JsonValue> = parsed;
             let data = parsed_json.get("data").unwrap();
             let first_data = match data {
