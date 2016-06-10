@@ -46,18 +46,31 @@ fn send_giphy_request(query: String) -> HttpResult<String> {
     Ok(s)
 }
 
+fn as_map(json: &JsonValue) -> Option<&BTreeMap<String, JsonValue>> {
+    match json {
+        &JsonValue::Object(ref obj) => Some(obj),
+        _ => None
+    }
+}
+
+
 pub fn request_gif(query: String) -> Option<String> {
     let json_body = send_giphy_request(query).expect("Couldn't get API info");
     match serde_json::from_str(&json_body[..]) {
         Ok(parsed) => {
             let parsed_json: BTreeMap<String, JsonValue> = parsed;
-            let data = parsed_json.get("data")
-                .and_then(|data| match data {
-                    JsonValue::Object(d) => d.get("images"),
-                    _ => None
-                });
-            println!("data {:?}", data);
-            Some("foo".to_owned())
+            let data = parsed_json.get("data").unwrap();
+            let first_data = match data {
+                &JsonValue::Array(ref vals) => Some(&vals[0]),
+                _ => None
+            }.unwrap();
+            let images = as_map(first_data).unwrap().get("images").unwrap();
+            let gif_info = as_map(images).unwrap().get("original").unwrap();
+            let gif = match as_map(gif_info).unwrap().get("url").unwrap() {
+                &JsonValue::String(ref s) => Some(s),
+                _ => None
+            }.unwrap();
+            Some(gif.to_owned())
         }
         Err(e) => {
             println!("Failed to parse JSON: {:?}", e);
