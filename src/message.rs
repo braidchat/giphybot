@@ -1,9 +1,12 @@
-use std::io::Cursor;
+use std::io::{Cursor,Write};
 use byteorder::{WriteBytesExt,ReadBytesExt,BigEndian};
 use uuid::Uuid;
 use serde;
 use serde::{Serialize,Deserialize};
+use rmp::Marker;
+use rmp::encode::{ValueWriteError, write_map_len, write_str};
 use rmp_serde::{Serializer,Deserializer};
+use rmp_serde::encode::VariantWriter;
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Message {
@@ -77,44 +80,26 @@ fn uuid_to_transit(uuid: &Uuid) -> TransitUuid {
     ("~#u".to_string(), (hi64, lo64))
 }
 
-fn test_response() {
-    use std::io::prelude::*;
-    use std::fs::File;
-    //use std::io::Write;
-    use rmp::Marker;
-    use rmp::encode::{ValueWriteError, write_map_len, write_str};
-    use rmp_serde::encode::VariantWriter;
+struct StructMapWriter;
 
-    struct StructMapWriter;
+impl VariantWriter for StructMapWriter {
+    fn write_struct_len<W>(&self, wr: &mut W, len: u32) -> Result<Marker, ValueWriteError>
+        where W: Write
+        {
+            write_map_len(wr, len)
+        }
 
-    impl VariantWriter for StructMapWriter {
-        fn write_struct_len<W>(&self, wr: &mut W, len: u32) -> Result<Marker, ValueWriteError>
-            where W: Write
-            {
-                write_map_len(wr, len)
-            }
+    fn write_field_name<W>(&self, wr: &mut W, _key: &str) -> Result<(), ValueWriteError>
+        where W: Write
+        {
+            write_str(wr, _key)
+        }
+}
 
-        fn write_field_name<W>(&self, wr: &mut W, _key: &str) -> Result<(), ValueWriteError>
-            where W: Write
-            {
-                write_str(wr, _key)
-            }
-    }
-
-    let test_message = Message {
-        id: Uuid::new_v4(),
-        group_id: Uuid::new_v4(),
-        thread_id: Uuid::new_v4(),
-        user_id: Uuid::new_v4(),
-        mentioned_user_ids: vec![Uuid::new_v4()],
-        mentioned_tag_ids: vec![Uuid::new_v4(), Uuid::new_v4()],
-        content: "response back!".to_string()
-    };
-
+pub fn encode_transit_msgpack(msg: Message) -> Vec<u8> {
     let mut buf = vec![];
-    test_message.serialize(&mut Serializer::with(&mut &mut buf, StructMapWriter)).ok().unwrap();
-    let mut f: File = File::create("message_from_bot.msgpack").ok().unwrap();
-    f.write_all(&buf[..]).ok().unwrap();
+    msg.serialize(&mut Serializer::with(&mut &mut buf, StructMapWriter)).ok().unwrap();
+    buf
 }
 
 pub fn decode_transit_msgpack(msgpack_buf: Vec<u8>) -> Option<Message> {
