@@ -3,11 +3,16 @@
 
 #[macro_use]
 extern crate iron;
+// Message parsing
 extern crate rmp;
 extern crate rmp_serde;
 extern crate serde;
 extern crate uuid;
 extern crate byteorder;
+// giphy requests
+extern crate toml;
+extern crate hyper;
+extern crate serde_json;
 
 use std::io::Read;
 
@@ -16,6 +21,7 @@ use iron::{method,status};
 
 mod routing;
 mod message;
+mod giphy;
 
 fn main() {
     Iron::new(|request : &mut Request| {

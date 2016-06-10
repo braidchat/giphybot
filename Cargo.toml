@@ -5,10 +5,12 @@ authors = ["James N. V. Cash <james.nvc@gmail.com>"]
 
 [dependencies]
 iron = "^0.3"
-rmp = "^0.7"
 serde = "^0.7"
 serde_macros = "0.7.8"
+serde_json = "^0.7"
+rmp = "^0.7"
 rmp-serde = "^0.9"
 uuid = "0.2"
 byteorder = "0.5"
 toml = "0.1"
+hyper = "0.9.7"
