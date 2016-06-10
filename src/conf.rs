@@ -12,12 +12,14 @@ fn slurp(file_name: &str) -> Result<String, String> {
     }
 }
 
-pub fn load_conf(file_name: &str) -> Result<BTreeMap<String, toml::Value>, String> {
+pub type TomlConf = BTreeMap<String, toml::Value>;
+
+pub fn load_conf(file_name: &str) -> Result<TomlConf, String> {
     let contents = try!(slurp(file_name).map_err(|e| e.to_string()));
-    try!(toml::Parser::new(&contents).parse().ok_or("Couldn't parse TOML"))
+    toml::Parser::new(&contents).parse().ok_or("Couldn't parse TOML".to_owned())
 }
 
-pub fn get_conf_val(conf: BTreeMap<String, toml::Value>, group: &str, key: &str) -> Option<String> {
+pub fn get_conf_val(conf: &TomlConf, group: &str, key: &str) -> Option<String> {
     conf.get(group)
         .and_then(|v| v.as_table())
         .and_then(|tbl| tbl.get(key))

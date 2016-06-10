@@ -10,11 +10,11 @@ use serde_json::value::Value as JsonValue;
 
 static GIPHY_SEARCH_URL: &'static str = "http://api.giphy.com/v1/gifs/search";
 
-fn send_giphy_request(api_key: String, query: String) -> HttpResult<String> {
+fn send_giphy_request(api_key: &str, query: String) -> HttpResult<String> {
     let mut url = Url::parse(GIPHY_SEARCH_URL).unwrap();
     url.query_pairs_mut()
         .append_pair("q", &query[..])
-        .append_pair("api_key", &api_key[..])
+        .append_pair("api_key", api_key)
         .append_pair("limit", "1");
     let fresh_req = try!(Request::new(Method::Get, url));
     let streaming_req = try!(fresh_req.start());
@@ -33,7 +33,7 @@ fn as_map(json: &JsonValue) -> Option<&BTreeMap<String, JsonValue>> {
 
 
 // TODO: Better error handling (Result? don't use expect or unwrap)
-pub fn request_gif(api_key: String, query: String) -> Option<String> {
+pub fn request_gif(api_key: &str, query: String) -> Option<String> {
     let json_body = send_giphy_request(api_key, query).expect("Couldn't get API info");
     match serde_json::from_str(&json_body[..]) {
         Ok(parsed) => {

@@ -27,7 +27,13 @@ mod giphy;
 mod conf;
 
 fn main() {
-    Iron::new(|request : &mut Request| {
+    let conf = conf::load_conf("conf.toml").expect("Couldn't load conf file!");
+    let bot_name = conf::get_conf_val(&conf, "braid", "name")
+        .expect("Missing braid bot name");
+    let api_key = conf::get_conf_val(&conf, "giphy", "api_key")
+        .expect("Missing giphy api key");
+    println!("Bot {:?} starting", bot_name);
+    Iron::new(move |request : &mut Request| {
         let req_path = request.url.path.join("/");
         match request.method {
             method::Put => {
@@ -40,7 +46,7 @@ fn main() {
                     match message::decode_transit_msgpack(buf) {
                         Some(msg) => {
                             println!("msg: {:?}", msg);
-                            let gif = giphy::request_gif("".to_owned(), msg.content);
+                            let gif = giphy::request_gif(&api_key[..], msg.content);
                             println!("gif for message {:?}", gif);
                         },
                         None => println!("Couldn't parse message")
