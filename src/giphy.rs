@@ -54,6 +54,7 @@ fn as_map(json: &JsonValue) -> Option<&BTreeMap<String, JsonValue>> {
 }
 
 
+// TODO: Better error handling (Result? don't use expect or unwrap)
 pub fn request_gif(query: String) -> Option<String> {
     let json_body = send_giphy_request(query).expect("Couldn't get API info");
     match serde_json::from_str(&json_body[..]) {
