@@ -1,8 +1,10 @@
 #![feature(custom_derive, plugin)]
 #![plugin(serde_macros)]
 
-#[macro_use]
-extern crate iron;
+// main
+#[macro_use] extern crate iron;
+extern crate regex;
+#[macro_use] extern crate lazy_static;
 // Message parsing
 extern crate rmp;
 extern crate rmp_serde;
@@ -14,22 +16,27 @@ extern crate hyper;
 extern crate serde_json;
 // configuration
 extern crate toml;
-extern crate regex;
 
 use std::io::Read;
 
 use iron::{Iron,Request,Response,IronError};
 use iron::{method,status};
+use regex::Regex;
 
 mod routing;
 mod message;
 mod giphy;
 mod conf;
 
+fn strip_leading_name(msg: String) -> String {
+    lazy_static! {
+        static ref RE: Regex  = Regex::new(r"^/(\w+)\b").unwrap();
+    }
+    RE.replace(&msg[..], "")
+}
+
 fn main() {
     let conf = conf::load_conf("conf.toml").expect("Couldn't load conf file!");
-    let bot_name = conf::get_conf_val(&conf, "braid", "name")
-        .expect("Missing braid bot name");
     let api_key = conf::get_conf_val(&conf, "giphy", "api_key")
         .expect("Missing giphy api key");
     println!("Bot {:?} starting", bot_name);
@@ -46,7 +53,9 @@ fn main() {
                     match message::decode_transit_msgpack(buf) {
                         Some(msg) => {
                             println!("msg: {:?}", msg);
-                            let gif = giphy::request_gif(&api_key[..], msg.content);
+                            let gif = giphy::request_gif(
+                                &api_key[..],
+                                strip_leading_name(msg.content));
                             println!("gif for message {:?}", gif);
                         },
                         None => println!("Couldn't parse message")
