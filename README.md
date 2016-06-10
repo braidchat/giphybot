@@ -6,3 +6,4 @@ this:
     [giphy]
     api_key = "GIPHY_API_KEY"
 
+There is a public giphy api key to use for testing: `dc6zaTOxFJmzC`
