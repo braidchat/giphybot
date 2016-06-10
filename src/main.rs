@@ -37,6 +37,8 @@ fn strip_leading_name(msg: String) -> String {
 
 fn main() {
     let conf = conf::load_conf("conf.toml").expect("Couldn't load conf file!");
+    let bot_name = conf::get_conf_val(&conf, "braid", "name")
+        .expect("Missing braid bot name");
     let api_key = conf::get_conf_val(&conf, "giphy", "api_key")
         .expect("Missing giphy api key");
     println!("Bot {:?} starting", bot_name);
