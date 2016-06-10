@@ -8,19 +8,19 @@ use rmp_serde::{Serializer,Deserializer};
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct Message {
     #[serde(rename="~:id", deserialize_with="deserialize_transit_uuid", serialize_with="serialize_transit_uuid")]
-    id: Uuid,
+    pub id: Uuid,
     #[serde(rename="~:group-id", deserialize_with="deserialize_transit_uuid", serialize_with="serialize_transit_uuid")]
-    group_id: Uuid,
+    pub group_id: Uuid,
     #[serde(rename="~:thread-id", deserialize_with="deserialize_transit_uuid", serialize_with="serialize_transit_uuid")]
-    thread_id: Uuid,
+    pub thread_id: Uuid,
     #[serde(rename="~:user-id", deserialize_with="deserialize_transit_uuid", serialize_with="serialize_transit_uuid")]
-    user_id: Uuid,
+    pub user_id: Uuid,
     #[serde(rename="~:mentioned-user-ids", deserialize_with="deserialize_transit_uuid_seq", serialize_with="serialize_transit_uuid_seq")]
-    mentioned_user_ids: Vec<Uuid>,
+    pub mentioned_user_ids: Vec<Uuid>,
     #[serde(rename="~:mentioned-tag-ids", deserialize_with="deserialize_transit_uuid_seq", serialize_with="serialize_transit_uuid_seq")]
-    mentioned_tag_ids: Vec<Uuid>,
+    pub mentioned_tag_ids: Vec<Uuid>,
     #[serde(rename="~:content")]
-    content: String,
+    pub content: String,
 }
 
 type TransitUuid = (String, (i64, i64));

@@ -35,7 +35,11 @@ fn main() {
                     let mut buf = Vec::new();
                     request.body.read_to_end(&mut buf).unwrap();
                     match message::decode_transit_msgpack(buf) {
-                        Some(msg) => println!("msg: {:?}", msg),
+                        Some(msg) => {
+                            println!("msg: {:?}", msg);
+                            let gif = giphy::request_gif(msg.content);
+                            println!("gif for message {:?}", gif);
+                        },
                         None => println!("Couldn't parse message")
                     }
                     Ok(Response::with((status::Ok, "ok")))

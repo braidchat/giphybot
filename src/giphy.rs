@@ -63,7 +63,7 @@ pub fn request_gif(query: String) -> Option<String> {
             parsed_json.get("data")
                 .and_then(|data| {
                     match data {
-                        &JsonValue::Array(ref vals) => Some(&vals[0]),
+                        &JsonValue::Array(ref vals) => vals.first(),
                         _ => None
                     }
                 })
