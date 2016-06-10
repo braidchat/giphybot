@@ -10,9 +10,11 @@ extern crate serde;
 extern crate uuid;
 extern crate byteorder;
 // giphy requests
-extern crate toml;
 extern crate hyper;
 extern crate serde_json;
+// configuration
+extern crate toml;
+extern crate regex;
 
 use std::io::Read;
 
@@ -22,6 +24,7 @@ use iron::{method,status};
 mod routing;
 mod message;
 mod giphy;
+mod conf;
 
 fn main() {
     Iron::new(|request : &mut Request| {
@@ -37,7 +40,7 @@ fn main() {
                     match message::decode_transit_msgpack(buf) {
                         Some(msg) => {
                             println!("msg: {:?}", msg);
-                            let gif = giphy::request_gif(msg.content);
+                            let gif = giphy::request_gif("".to_owned(), msg.content);
                             println!("gif for message {:?}", gif);
                         },
                         None => println!("Couldn't parse message")
