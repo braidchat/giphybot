@@ -117,7 +117,7 @@ fn test_response() {
     f.write_all(&buf[..]).ok().unwrap();
 }
 
-pub fn decode_msgpack_body(msgpack_buf: Vec<u8>) -> Option<Message> {
+pub fn decode_transit_msgpack(msgpack_buf: Vec<u8>) -> Option<Message> {
     let cur = Cursor::new(&msgpack_buf[..]);
     let mut deserializer = Deserializer::new(cur);
     Deserialize::deserialize(&mut deserializer).ok()

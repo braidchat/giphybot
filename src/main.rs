@@ -34,7 +34,7 @@ fn main() {
                     println!("Request mac = {:?}", mac);
                     let mut buf = Vec::new();
                     request.body.read_to_end(&mut buf).unwrap();
-                    match message::decode_msgpack_body(buf) {
+                    match message::decode_transit_msgpack(buf) {
                         Some(msg) => println!("msg: {:?}", msg),
                         None => println!("Couldn't parse message")
                     }
