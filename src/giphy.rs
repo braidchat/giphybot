@@ -58,20 +58,29 @@ pub fn request_gif(query: String) -> Option<String> {
     let json_body = send_giphy_request(query).expect("Couldn't get API info");
     match serde_json::from_str(&json_body[..]) {
         Ok(parsed) => {
-            // TODO: don't just use unwrap() everywhere, handle errors
             let parsed_json: BTreeMap<String, JsonValue> = parsed;
-            let data = parsed_json.get("data").unwrap();
-            let first_data = match data {
-                &JsonValue::Array(ref vals) => Some(&vals[0]),
-                _ => None
-            }.unwrap();
-            let images = as_map(first_data).unwrap().get("images").unwrap();
-            let gif_info = as_map(images).unwrap().get("original").unwrap();
-            let gif = match as_map(gif_info).unwrap().get("url").unwrap() {
-                &JsonValue::String(ref s) => Some(s),
-                _ => None
-            }.unwrap();
-            Some(gif.to_owned())
+            parsed_json.get("data")
+                .and_then(|data| {
+                    match data {
+                        &JsonValue::Array(ref vals) => Some(&vals[0]),
+                        _ => None
+                    }
+                })
+                .and_then(|first_data| {
+                    as_map(first_data).and_then(|m| { m.get("images") })
+                })
+                .and_then(|images| {
+                    as_map(images).and_then(|m| { m.get("original") })
+                })
+                .and_then(|gif_info| {
+                    match as_map(gif_info).unwrap().get("url").unwrap() {
+                        &JsonValue::String(ref s) => Some(s),
+                        _ => None
+                    }
+                })
+                .map(|gif| {
+                    gif.to_owned()
+                })
         }
         Err(e) => {
             println!("Failed to parse JSON: {:?}", e);
