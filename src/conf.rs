@@ -1,10 +1,9 @@
 use toml;
 use std::collections::BTreeMap;
 use std::io::Read;
+use std::fs::File;
 
 fn slurp(file_name: &str) -> Result<String, String> {
-    use std::io::prelude::*;
-    use std::fs::File;
     let mut s = String::new();
     match File::open(file_name).and_then(|mut f| { f.read_to_string(&mut s) }) {
         Ok(_) => Ok(s),
