@@ -6,7 +6,7 @@ use serde::{Serialize,Deserialize};
 use rmp_serde::{Serializer,Deserializer};
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
-struct Message {
+pub struct Message {
     #[serde(rename="~:id", deserialize_with="deserialize_transit_uuid", serialize_with="serialize_transit_uuid")]
     id: Uuid,
     #[serde(rename="~:group-id", deserialize_with="deserialize_transit_uuid", serialize_with="serialize_transit_uuid")]
@@ -117,17 +117,9 @@ fn test_response() {
     f.write_all(&buf[..]).ok().unwrap();
 }
 
-pub fn decode_msgpack_body(msgpack_buf: Vec<u8>) {
+pub fn decode_msgpack_body(msgpack_buf: Vec<u8>) -> Option<Message> {
     let cur = Cursor::new(&msgpack_buf[..]);
     let mut deserializer = Deserializer::new(cur);
-    match Deserialize::deserialize(&mut deserializer) {
-        Result::Ok(res) => {
-            let message: Message = res;
-            println!("message = {:?}", message);
-            test_response();
-        }
-        Result::Err(err) =>
-            println!("error parsing: {:?}", err)
-    }
+    Deserialize::deserialize(&mut deserializer).ok()
 }
 

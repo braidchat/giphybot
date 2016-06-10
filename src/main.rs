@@ -34,7 +34,10 @@ fn main() {
                     println!("Request mac = {:?}", mac);
                     let mut buf = Vec::new();
                     request.body.read_to_end(&mut buf).unwrap();
-                    message::decode_msgpack_body(buf);
+                    match message::decode_msgpack_body(buf) {
+                        Some(msg) => println!("msg: {:?}", msg),
+                        None => println!("Couldn't parse message")
+                    }
                     Ok(Response::with((status::Ok, "ok")))
                 } else {
                     Err(IronError::new(routing::NoRoute, status::NotFound))
