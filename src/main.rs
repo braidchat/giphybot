@@ -21,6 +21,8 @@ extern crate toml;
 use std::io::Read;
 use std::thread;
 use std::error::Error;
+use std::env;
+use std::process;
 
 use iron::{Iron,Request,Response,IronError};
 use iron::{method,status};
@@ -40,7 +42,16 @@ fn strip_leading_name(msg: &str) -> String {
 }
 
 fn main() {
-    let conf = conf::load_conf("conf.toml").expect("Couldn't load conf file!");
+    let args: Vec<_> = env::args().collect();
+    if args.len() <= 1 {
+        println!("Usage: {} <configuration toml file>", args[0]);
+        process::exit(1);
+    }
+    let ref conf_filename = args[1];
+    let conf = conf::load_conf(&conf_filename[..]).expect("Couldn't load conf file!");
+    let bind_port = conf::get_conf_val(&conf, "general", "port")
+        .expect("Missing key port in section general");
+    let bind_addr = format!("localhost:{}", bind_port);
     let giphy_api_key = conf::get_conf_val(&conf, "giphy", "api_key")
         .expect("Missing giphy api key");
     let braid_conf = conf::get_conf_group(&conf, "braid")
@@ -95,5 +106,5 @@ fn main() {
             }
             _ => Err(IronError::new(routing::NoRoute, status::NotFound))
         }
-    }).http("localhost:9999").unwrap();
+    }).http(&bind_addr[..]).unwrap();
 }
