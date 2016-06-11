@@ -32,11 +32,11 @@ mod message;
 mod giphy;
 mod braid;
 
-fn strip_leading_name(msg: String) -> String {
+fn strip_leading_name(msg: &str) -> String {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"^/(\w+)\b").unwrap();
     }
-    RE.replace(&msg[..], "")
+    RE.replace(msg, "")
 }
 
 fn main() {
@@ -71,10 +71,13 @@ fn main() {
                                 println!("msg: {:?}", msg);
                                 let gif = giphy::request_gif(
                                     &giphy_api_key[..],
-                                    strip_leading_name(msg.content));
+                                    strip_leading_name(&msg.content[..]))
+                                    .unwrap_or("Couldn't find anything :(".to_owned());
                                 println!("gif for message {:?}", gif);
+                                let response_msg = message::response_to(
+                                    msg, gif);
                                 let braid_resp = braid::send_braid_request(
-                                    &braid_conf, message::random_message());
+                                    &braid_conf, response_msg);
                                 match braid_resp {
                                     Ok(_) => println!("Sent message to braid"),
                                     Err(e) =>

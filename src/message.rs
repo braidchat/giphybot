@@ -109,14 +109,14 @@ pub fn decode_transit_msgpack(msgpack_buf: Vec<u8>) -> Option<Message> {
     Deserialize::deserialize(&mut deserializer).ok()
 }
 
-pub fn random_message() -> Message {
+pub fn response_to(msg: Message, content: String) -> Message {
     Message {
         id: Uuid::new_v4(),
-        user_id: Uuid::new_v4(),
-        group_id: Uuid::new_v4(),
-        thread_id: Uuid::new_v4(),
+        user_id: Uuid::new_v4(), // gets filled in by server
+        group_id: msg.group_id,
+        thread_id: msg.group_id,
         mentioned_user_ids: vec![],
         mentioned_tag_ids: vec![],
-        content: "Test message".to_owned(),
+        content: content,
     }
 }

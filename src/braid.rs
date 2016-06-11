@@ -1,5 +1,5 @@
-use message;
 use conf;
+use message;
 use hyper::header::{Headers,ContentType,Authorization,Basic};
 use hyper::client::{Client,Response};
 use hyper::error::Result as HttpResult;
