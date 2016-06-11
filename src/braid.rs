@@ -20,7 +20,7 @@ pub fn send_braid_request(braid_conf: &conf::TomlConf, message: message::Message
                               vec![])));
     headers.set(Authorization(Basic{username: bot_id, password: Some(token)}));
     client.put(api_url)
-        .body("foo")
+        .body(&body[..])
         .headers(headers)
         .send()
 }
