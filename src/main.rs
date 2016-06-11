@@ -5,6 +5,8 @@
 #[macro_use] extern crate iron;
 extern crate regex;
 #[macro_use] extern crate lazy_static;
+extern crate openssl;
+extern crate rustc_serialize;
 // Message parsing
 extern crate rmp;
 extern crate rmp_serde;
@@ -27,6 +29,9 @@ use std::process;
 use iron::{Iron,Request,Response,IronError};
 use iron::{method,status};
 use regex::Regex;
+use openssl::crypto::hmac;
+use openssl::crypto::hash::Type;
+use rustc_serialize::hex::FromHex;
 
 mod conf;
 mod routing;
@@ -39,6 +44,16 @@ fn strip_leading_name(msg: &str) -> String {
         static ref RE: Regex = Regex::new(r"^/(\w+)\b").unwrap();
     }
     RE.replace(msg, "")
+}
+
+fn verify_hmac(mac: Vec<u8>, key: &[u8], data: &[u8]) -> bool {
+    if let Some(mac) = String::from_utf8(mac).ok()
+        .and_then(|mac_str| (&mac_str[..]).from_hex().ok()) {
+            let generated: Vec<u8> = hmac::hmac(Type::SHA256, key, data).to_vec();
+            mac == generated
+        } else {
+            false
+        }
 }
 
 fn main() {
@@ -63,23 +78,29 @@ fn main() {
             panic!("Missing braid configuration key '{}'", k);
         }
     }
+    let braid_token = conf::get_conf_val(&conf, "braid", "token").unwrap();
     println!("Bot {:?} starting", braid_conf.get("name").unwrap().as_str().unwrap());
     Iron::new(move |request : &mut Request| {
         let req_path = request.url.path.join("/");
         match request.method {
             method::Put => {
                 if req_path == "message" {
-                    let mac = request.headers.get_raw("X-Braid-Signature");
-                    // TODO: verify mac
-                    println!("Request mac = {:?}", mac);
+                    let mac = try!(request.headers.get_raw("X-Braid-Signature")
+                                   .and_then(|h| h.get(0))
+                                   .ok_or(IronError::new(routing::MissingMac,
+                                                         status::Unauthorized)));
                     let mut buf = Vec::new();
                     request.body.read_to_end(&mut buf).unwrap();
+                    if !verify_hmac(mac.clone(), braid_token.as_bytes(), &buf[..]) {
+                        println!("Bad mac");
+                        return Err(IronError::new(routing::BadMac, status::Forbidden));
+                    }
+                    println!("Mac OK");
                     match message::decode_transit_msgpack(buf) {
                         Some(msg) => {
                             let braid_conf = braid_conf.clone();
                             let giphy_api_key = giphy_api_key.clone();
                             thread::spawn(move || {
-                                println!("msg: {:?}", msg);
                                 let gif = giphy::request_gif(
                                     &giphy_api_key[..],
                                     strip_leading_name(&msg.content[..]))
