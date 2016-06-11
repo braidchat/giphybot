@@ -20,6 +20,7 @@ extern crate toml;
 
 use std::io::Read;
 use std::thread;
+use std::error::Error;
 
 use iron::{Iron,Request,Response,IronError};
 use iron::{method,status};
@@ -72,8 +73,14 @@ fn main() {
                                     &giphy_api_key[..],
                                     strip_leading_name(msg.content));
                                 println!("gif for message {:?}", gif);
-                                braid::send_braid_request(
+                                let braid_resp = braid::send_braid_request(
                                     &braid_conf, message::random_message());
+                                match braid_resp {
+                                    Ok(_) => println!("Sent message to braid"),
+                                    Err(e) =>
+                                        println!("Failed to send to braid: {:?}",
+                                                 e.description()),
+                                }
                             });
                         },
                         None => println!("Couldn't parse message")
