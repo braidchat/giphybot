@@ -114,7 +114,7 @@ pub fn response_to(msg: Message, content: String) -> Message {
         id: Uuid::new_v4(),
         user_id: Uuid::new_v4(), // gets filled in by server
         group_id: msg.group_id,
-        thread_id: msg.group_id,
+        thread_id: msg.thread_id,
         mentioned_user_ids: vec![],
         mentioned_tag_ids: vec![],
         content: content,
