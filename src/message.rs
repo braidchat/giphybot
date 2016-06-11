@@ -96,6 +96,7 @@ impl VariantWriter for StructMapWriter {
         }
 }
 
+// TODO: check for error instead of just unwrap
 pub fn encode_transit_msgpack(msg: Message) -> Vec<u8> {
     let mut buf = vec![];
     msg.serialize(&mut Serializer::with(&mut &mut buf, StructMapWriter)).ok().unwrap();
@@ -108,3 +109,14 @@ pub fn decode_transit_msgpack(msgpack_buf: Vec<u8>) -> Option<Message> {
     Deserialize::deserialize(&mut deserializer).ok()
 }
 
+pub fn random_message() -> Message {
+    Message {
+        id: Uuid::new_v4(),
+        user_id: Uuid::new_v4(),
+        group_id: Uuid::new_v4(),
+        thread_id: Uuid::new_v4(),
+        mentioned_user_ids: vec![],
+        mentioned_tag_ids: vec![],
+        content: "Test message".to_owned(),
+    }
+}
