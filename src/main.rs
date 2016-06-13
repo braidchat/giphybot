@@ -62,6 +62,7 @@ fn main() {
         println!("Usage: {} <configuration toml file>", args[0]);
         process::exit(1);
     }
+    // Load configuration
     let ref conf_filename = args[1];
     let conf = conf::load_conf(&conf_filename[..]).expect("Couldn't load conf file!");
     let bind_port = conf::get_conf_val(&conf, "general", "port")
@@ -79,12 +80,14 @@ fn main() {
         }
     }
     let braid_token = conf::get_conf_val(&conf, "braid", "token").unwrap();
+    // Start server
     println!("Bot {:?} starting", braid_conf.get("name").unwrap().as_str().unwrap());
     Iron::new(move |request : &mut Request| {
         let req_path = request.url.path.join("/");
         match request.method {
             method::Put => {
                 if req_path == "message" {
+                    // Verify MAC
                     let mac = try!(request.headers.get_raw("X-Braid-Signature")
                                    .and_then(|h| h.get(0))
                                    .ok_or(IronError::new(routing::MissingMac,
@@ -96,6 +99,7 @@ fn main() {
                         return Err(IronError::new(routing::BadMac, status::Forbidden));
                     }
                     println!("Mac OK");
+                    // Decode message then handle gif search & reply on new thread
                     match message::decode_transit_msgpack(buf) {
                         Some(msg) => {
                             let braid_conf = braid_conf.clone();
