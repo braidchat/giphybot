@@ -13,6 +13,7 @@ Create a configuration toml file with the app's configuration.  It should look l
     [braid]
     name = "nameofthisbotonbraid"
     api_url = "https://api.braid.chat/bots/message"
+    app_id = "BOT_BRAID_ID"
     token = "BOT_BRAID_TOKEN"
 
 There is a public giphy api key to use for testing: `dc6zaTOxFJmzC`
