@@ -28,6 +28,7 @@ use std::process;
 
 use iron::{Iron,Request,Response,IronError};
 use iron::{method,status};
+use hyper::status::StatusCode;
 use regex::Regex;
 use openssl::crypto::hmac;
 use openssl::crypto::hash::Type;
@@ -115,7 +116,14 @@ fn main() {
                                 let braid_resp = braid::send_braid_request(
                                     &braid_conf, response_msg);
                                 match braid_resp {
-                                    Ok(_) => println!("Sent message to braid"),
+                                    Ok(r) => {
+                                        println!("Sent message to braid");
+                                        if r.status == StatusCode::Created {
+                                            println!("Message created!");
+                                        } else {
+                                            println!("Something went wrong: {:?}", r);
+                                        }
+                                    }
                                     Err(e) =>
                                         println!("Failed to send to braid: {:?}",
                                                  e.description()),
