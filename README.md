@@ -1,6 +1,7 @@
 ## Setting up giphybot
 
 Giphybot is written in Rust, so you'll probably want to use [rustup][] to install the rust toolchain if you don't already have it set up.
+Alternatively, you can use a [pre-built binary](https://github.com/braidchat/giphybot/releases).
 
 Create a configuration toml file with the app's configuration.  It should look like this:
 
