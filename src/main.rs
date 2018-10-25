@@ -1,8 +1,5 @@
-#![feature(custom_derive, plugin)]
-#![plugin(serde_macros)]
-
 // main
-#[macro_use] extern crate iron;
+extern crate iron;
 extern crate regex;
 #[macro_use] extern crate lazy_static;
 extern crate openssl;
@@ -10,6 +7,7 @@ extern crate rustc_serialize;
 // Message parsing
 extern crate rmp;
 extern crate rmp_serde;
+#[macro_use] extern crate serde_derive;
 extern crate serde;
 extern crate uuid;
 extern crate byteorder;
@@ -17,6 +15,8 @@ extern crate byteorder;
 extern crate hyper;
 extern crate mime;
 extern crate serde_json;
+extern crate base64;
+extern crate urlencoding;
 // configuration
 extern crate toml;
 
@@ -28,10 +28,11 @@ use std::process;
 
 use iron::{Iron,Request,Response,IronError};
 use iron::{method,status};
-use hyper::status::StatusCode;
+use hyper::StatusCode;
 use regex::Regex;
-use openssl::crypto::hmac;
-use openssl::crypto::hash::Type;
+use openssl::pkey::PKey;
+use openssl::sign::Signer;
+use openssl::hash::MessageDigest;
 use rustc_serialize::hex::FromHex;
 
 mod conf;
@@ -44,13 +45,21 @@ fn strip_leading_name(msg: &str) -> String {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"^/(\w+)\b").unwrap();
     }
-    RE.replace(msg, "")
+    RE.replace(msg, "").into_owned()
 }
 
+fn hmac_sha256(key: &[u8], data: &[u8]) -> Vec<u8> {
+    let pkey = PKey::hmac(key).unwrap();
+    let mut signer = Signer::new(MessageDigest::sha256(), &pkey).unwrap();
+    signer.update(data).unwrap();
+    signer.sign_to_vec().unwrap()
+}
+
+// [TODO] Use Verifer instead of Signer & comparing
 fn verify_hmac(mac: Vec<u8>, key: &[u8], data: &[u8]) -> bool {
     if let Some(mac) = String::from_utf8(mac).ok()
         .and_then(|mac_str| (&mac_str[..]).from_hex().ok()) {
-            let generated: Vec<u8> = hmac::hmac(Type::SHA256, key, data).to_vec();
+            let generated = hmac_sha256(key, data);
             mac == generated
         } else {
             false
@@ -84,7 +93,7 @@ fn main() {
     // Start server
     println!("Bot {:?} starting", braid_conf.get("name").unwrap().as_str().unwrap());
     Iron::new(move |request : &mut Request| {
-        let req_path = request.url.path.join("/");
+        let req_path = request.url.path().join("/");
         match request.method {
             method::Put => {
                 if req_path == "message" {
@@ -118,7 +127,7 @@ fn main() {
                                 match braid_resp {
                                     Ok(r) => {
                                         println!("Sent message to braid");
-                                        if r.status == StatusCode::Created {
+                                        if r.status() == StatusCode::CREATED {
                                             println!("Message created!");
                                         } else {
                                             println!("Something went wrong: {:?}", r);

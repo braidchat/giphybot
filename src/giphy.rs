@@ -1,27 +1,37 @@
-use std::io::Read;
 use std::collections::BTreeMap;
-use hyper::Url;
-use hyper::method::Method;
-use hyper::client::Request;
-use hyper::error::Result as HttpResult;
+use hyper;
+use hyper::{Request,Body};
+use hyper::client::Client;
 use serde_json;
 use serde_json::value::Value as JsonValue;
-
+use hyper::rt::{Future,Stream};
+use urlencoding;
 
 static GIPHY_SEARCH_URL: &'static str = "http://api.giphy.com/v1/gifs/search";
 
-fn send_giphy_request(api_key: &str, query: String) -> HttpResult<String> {
-    let mut url = Url::parse(GIPHY_SEARCH_URL).unwrap();
-    url.query_pairs_mut()
-        .append_pair("q", &query[..])
-        .append_pair("api_key", api_key)
-        .append_pair("limit", "1");
-    let fresh_req = try!(Request::new(Method::Get, url));
-    let streaming_req = try!(fresh_req.start());
-    let mut resp = try!(streaming_req.send());
-    let mut s = String::new();
-    try!(resp.read_to_string(&mut s));
-    Ok(s)
+fn send_giphy_request(api_key: &str, query: String) -> Option<String> {
+    let query_url = format!("{}?q={}&api_key={}&limit=1",
+                            GIPHY_SEARCH_URL,
+                            urlencoding::encode(&query),
+                            urlencoding::encode(api_key));
+    let req = Request::builder()
+        .uri(query_url)
+        .method("GET")
+        .body(Body::empty()).unwrap();
+
+    let client = Client::new();
+    let resp: hyper::Response<hyper::Body> = client.request(req).wait().ok()?;
+
+    let body = resp
+        .into_body()
+        .wait();
+    let body_vec = body.fold(Vec::new(), |mut acc, res_chunk| {
+            let chunk = res_chunk.unwrap();
+            println!("Folding result chunk {:?}", chunk);
+            acc.extend_from_slice(&*chunk);
+            acc
+        });
+    String::from_utf8(body_vec).ok()
 }
 
 fn as_map(json: &JsonValue) -> Option<&BTreeMap<String, JsonValue>> {
@@ -32,7 +42,7 @@ fn as_map(json: &JsonValue) -> Option<&BTreeMap<String, JsonValue>> {
 }
 
 
-// TODO: Better error handling (Result? don't use expect or unwrap)
+// [TODO] Better error handling (Result? don't use expect or unwrap)
 pub fn request_gif(api_key: &str, query: String) -> Option<String> {
     println!("searching for giphy {}", query);
     let json_body = send_giphy_request(api_key, query).expect("Couldn't get API info");

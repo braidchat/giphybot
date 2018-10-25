@@ -28,14 +28,14 @@ pub struct Message {
 
 type TransitUuid = (String, (i64, i64));
 
-fn deserialize_transit_uuid<D>(de: &mut D) -> Result<Uuid, D::Error>
-where D: serde::Deserializer {
+fn deserialize_transit_uuid<'de, D>(de: D) -> Result<Uuid, D::Error>
+where D: serde::Deserializer<'de> {
     let transit_uuid: TransitUuid = try!(Deserialize::deserialize(de));
     Ok(transit_to_uuid(transit_uuid))
 }
 
-fn deserialize_transit_uuid_seq<D>(de: &mut D) -> Result<Vec<Uuid>, D::Error>
-where D: serde::Deserializer {
+fn deserialize_transit_uuid_seq<'de, D>(de: D) -> Result<Vec<Uuid>, D::Error>
+where D: serde::Deserializer<'de> {
     let transit_uuids: Vec<TransitUuid> = try!(Deserialize::deserialize(de));
     Ok(transit_uuids.into_iter().map(transit_to_uuid).collect())
 }
@@ -51,25 +51,22 @@ fn transit_to_uuid(transit_uuid: TransitUuid) -> Uuid {
     for i in 0..wrtr.len() {
         bytes[i] = wrtr[i];
     }
-    Uuid::from_bytes(&bytes).ok().unwrap()
+    Uuid::from_bytes(bytes)
 }
 
-fn serialize_transit_uuid<S>(uuid: &Uuid, se: &mut S) -> Result<(), S::Error>
+fn serialize_transit_uuid<S>(uuid: &Uuid, se: S) -> Result<S::Ok, S::Error>
 where S: serde::Serializer {
-    let transit_uuid = uuid_to_transit(uuid);
-    match transit_uuid.serialize(se) {
-        Ok(_) => Ok(()),
-        Err(_) => Err(serde::ser::Error::custom("Failed to serialize uuid")),
-    }
+    uuid_to_transit(uuid).serialize(se).map_err(|_| {
+        serde::ser::Error::custom("Failed to serialize uuid")
+    })
 }
 
-fn serialize_transit_uuid_seq<S>(uuids: &Vec<Uuid>, se: &mut S) -> Result<(), S::Error>
+fn serialize_transit_uuid_seq<S>(uuids: &Vec<Uuid>, se: S) -> Result<S::Ok, S::Error>
 where S: serde::Serializer {
     let transit_uuids: Vec<TransitUuid> = uuids.into_iter().map(uuid_to_transit).collect();
-    match transit_uuids.serialize(se) {
-        Ok(_) => Ok(()),
-        Err(_) => Err(serde::ser::Error::custom("Failed to serialize uuid vector")),
-    }
+    transit_uuids.serialize(se).map_err(|_| {
+        serde::ser::Error::custom("Failed to serialize uuid vector")
+    })
 }
 
 fn uuid_to_transit(uuid: &Uuid) -> TransitUuid {

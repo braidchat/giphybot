@@ -15,7 +15,7 @@ pub type TomlConf = BTreeMap<String, toml::Value>;
 
 pub fn load_conf(file_name: &str) -> Result<TomlConf, String> {
     let contents = try!(slurp(file_name).map_err(|e| e.to_string()));
-    toml::Parser::new(&contents).parse().ok_or("Couldn't parse TOML".to_owned())
+    toml::de::from_str(&contents).or(Err("Couldn't parse TOML".to_owned()))
 }
 
 pub fn get_conf_val(conf: &TomlConf, group: &str, key: &str) -> Option<String> {
@@ -26,6 +26,6 @@ pub fn get_conf_val(conf: &TomlConf, group: &str, key: &str) -> Option<String> {
         .map(|s| s.to_owned())
 }
 
-pub fn get_conf_group(conf: &TomlConf, group: &str) -> Option<toml::Table> {
+pub fn get_conf_group(conf: &TomlConf, group: &str) -> Option<toml::value::Table> {
     conf.get(group).and_then(|v| v.as_table()).map(|t| t.clone())
 }

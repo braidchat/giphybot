@@ -4,21 +4,23 @@ version = "0.1.0"
 authors = ["James N. V. Cash <james.nvc@gmail.com>"]
 
 [dependencies]
-iron = "^0.3"
-serde = "^0.7"
-serde_macros = "0.7.8"
+iron = "^0.6"
+serde = "^1.0"
+serde_derive = "^1.0"
 serde_json = "^0.7"
-rmp = "^0.7"
-rmp-serde = "^0.9"
-uuid = "0.2"
-byteorder = "0.5"
-toml = "0.1"
-hyper = "0.9.7"
-regex = "0.1"
-lazy_static = "0.2.1"
-mime = "^0.2"
-openssl = "0.7.13"
-rustc-serialize = "0.3.19"
+rmp = "^0.8"
+rmp-serde = "^0.13"
+uuid = { version = "^0.7", features = ["v4"] }
+byteorder = "^1.2"
+toml = "^0.4"
+hyper = "^0.12"
+regex = "^1.0"
+lazy_static = "^1.1"
+mime = "^0.3"
+openssl = "^0.10"
+rustc-serialize = "^0.3"
+base64 = "^0.9"
+urlencoding = "1.0.0"
 
 [profile.release]
 lto = true
