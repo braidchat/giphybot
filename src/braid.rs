@@ -8,7 +8,7 @@ use hyper::rt::Future;
 use base64;
 
 fn basic_auth(user: String, pass: String) -> String {
-    base64::encode(&format!("{}:{}", user, pass))
+    format!("Basic {}", base64::encode(&format!("{}:{}", user, pass)))
 }
 
 pub fn send_braid_request(braid_conf: &conf::TomlConf, message: message::Message)
@@ -19,6 +19,7 @@ pub fn send_braid_request(braid_conf: &conf::TomlConf, message: message::Message
     let token = braid_conf.get("token").unwrap().as_str().unwrap().to_owned();
     let body = message::encode_transit_msgpack(message);
     let req = Request::builder()
+        .method("POST")
         .uri(api_url)
         .header(CONTENT_TYPE, "application/transit+msgpack")
         .header(AUTHORIZATION, basic_auth(bot_id, token))

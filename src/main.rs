@@ -17,6 +17,7 @@ extern crate mime;
 extern crate serde_json;
 extern crate base64;
 extern crate urlencoding;
+extern crate futures;
 // configuration
 extern crate toml;
 
@@ -29,6 +30,8 @@ use std::process;
 use iron::{Iron,Request,Response,IronError};
 use iron::{method,status};
 use hyper::StatusCode;
+use hyper::rt;
+use futures::{future,Future};
 use regex::Regex;
 use openssl::pkey::PKey;
 use openssl::sign::Signer;
@@ -115,29 +118,32 @@ fn main() {
                             let braid_conf = braid_conf.clone();
                             let giphy_api_key = giphy_api_key.clone();
                             thread::spawn(move || {
-                                let gif = giphy::request_gif(
-                                    &giphy_api_key[..],
-                                    strip_leading_name(&msg.content[..]))
-                                    .unwrap_or("Couldn't find anything :(".to_owned());
-                                println!("gif for message {:?}", gif);
-                                let response_msg = message::response_to(
-                                    msg, gif);
-                                let braid_resp = braid::send_braid_request(
-                                    &braid_conf, response_msg);
-                                match braid_resp {
-                                    Ok(r) => {
-                                        println!("Sent message to braid");
-                                        if r.status() == StatusCode::CREATED {
-                                            println!("Message created!");
-                                        } else {
-                                            println!("Something went wrong: {:?}", r);
-                                        }
-                                    }
-                                    Err(e) =>
-                                        println!("Failed to send to braid: {:?}",
-                                                 e.description()),
-                                }
-                            });
+                                rt::run(
+                                    giphy::request_gif(&giphy_api_key[..],
+                                                       strip_leading_name(&msg.content[..]))
+                                        .and_then(move |gif| {
+                                            println!("gif for message {:?}", gif);
+                                            let response_msg = message::response_to(
+                                                msg, gif);
+                                            let braid_resp = braid::send_braid_request(
+                                                &braid_conf, response_msg);
+                                            match braid_resp {
+                                                Ok(r) => {
+                                                    println!("Sent message to braid");
+                                                    if r.status() == StatusCode::CREATED {
+                                                        println!("Message created!");
+                                                    } else {
+                                                        println!("Something went wrong: {:?}", r);
+                                                    }
+                                                }
+                                                Err(e) =>
+                                                    println!("Failed to send to braid: {:?}",
+                                                             e.description()),
+                                            }
+                                            future::ok(())
+                                        })
+
+                                )});
                         },
                         None => println!("Couldn't parse message")
                     }
